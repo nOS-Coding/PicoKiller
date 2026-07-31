@@ -7,7 +7,6 @@
 #define OS_WINDOWS (1u << 0)
 #define OS_LINUX   (1u << 1)
 #define OS_MACOS   (1u << 2)
-#define OS_ANDROID (1u << 3)
 
 /* Pranks (bit flags, stored in flash). */
 #define PRANK_BSOD    (1u << 0)

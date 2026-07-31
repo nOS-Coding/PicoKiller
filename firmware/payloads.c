@@ -165,12 +165,12 @@ void payload_run_all(uint32_t targets, uint32_t pranks)
         PRANK_BSOD, PRANK_UPDATE, PRANK_NETWORK, PRANK_SHUTDOWN
     };
     static const uint32_t os_order[] = {
-        OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANDROID
+        OS_WINDOWS, OS_LINUX, OS_MACOS
     };
 
     for (size_t pi = 0; pi < 4; pi++) {
         if (!(pranks & prank_order[pi])) continue;
-        for (size_t oi = 0; oi < 4; oi++) {
+        for (size_t oi = 0; oi < 3; oi++) {
             if (!(targets & os_order[oi])) continue;
             const script_evt_t *seq = payload_get(prank_order[pi], os_order[oi]);
             if (!seq) {

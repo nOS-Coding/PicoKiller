@@ -16,7 +16,7 @@
 "use strict";
 
 // Bit flags (must match firmware/config.h)
-const OS = { windows: 1 << 0, linux: 1 << 1, macos: 1 << 2, android: 1 << 3 };
+const OS = { windows: 1 << 0, linux: 1 << 1, macos: 1 << 2 };
 const PRANK = { bsod: 1 << 0, update: 1 << 1, network: 1 << 2, shutdown: 1 << 3 };
 
 const CONFIG_MAGIC = 0x31434B50;          // 'PKC1'
@@ -108,8 +108,6 @@ function refresh() {
     if (shutdown) el(id).checked = false;
   }
 
-  el("android-note").classList.toggle("hidden", !el("t-android").checked);
-
   updateSummary();
 }
 
@@ -118,7 +116,7 @@ function updateSummary() {
   const pFlags = selected(PRANK, 'p');
   const delayS = clampDelay();
   const names = {
-    windows: "Windows", linux: "Linux", macos: "macOS", android: "Android",
+    windows: "Windows", linux: "Linux", macos: "macOS",
     bsod: "Fake BSOD", update: "Fake Update", network: "Network kill", shutdown: "Shutdown",
   };
   const tNames = Object.keys(OS).filter((k) => tFlags & OS[k]).map((k) => names[k]);
@@ -149,7 +147,7 @@ function build() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  for (const id of ["t-windows", "t-linux", "t-macos", "t-android",
+  for (const id of ["t-windows", "t-linux", "t-macos",
                     "p-bsod", "p-update", "p-network", "p-shutdown"]) {
     el(id).addEventListener("change", refresh);
   }
