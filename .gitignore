@@ -1,0 +1,6 @@
+build/
+firmware/build*/
+*.o
+*.elf
+*.uf2
+.DS_Store

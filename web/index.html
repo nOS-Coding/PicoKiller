@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PicoKiller configurator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>PicoKiller configurator</h2>
+<p>Choose the target systems and pranks you want the device to fire, then download a config .uf2.</p>
+<p>The config only writes the last 4 KB of flash — your firmware is never touched.</p>
+
+<h3>Select target systems</h3>
+<label>
+  <input type="checkbox" class="styled" id="t-windows" checked>
+  <span class="custom-checkbox"></span>
+  Windows
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="t-linux">
+  <span class="custom-checkbox"></span>
+  Linux
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="t-macos">
+  <span class="custom-checkbox"></span>
+  macOS
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="t-android">
+  <span class="custom-checkbox"></span>
+  Android
+</label><br>
+<div id="android-note" class="hidden note">Android pranks are limited: USB keyboards only work after you enable the
+"USB keyboard" accessibility option, and Android has no typed shortcuts for these pranks yet.</div>
+
+<h3>Select pranks</h3>
+<label>
+  <input type="checkbox" class="styled" id="p-bsod" checked>
+  <span class="custom-checkbox"></span>
+  Fake Blue Screen <span class="tag">Windows only</span>
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="p-update">
+  <span class="custom-checkbox"></span>
+  Fake Update screen
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="p-network">
+  <span class="custom-checkbox"></span>
+  Network kill
+</label><br>
+<label>
+  <input type="checkbox" class="styled" id="p-shutdown">
+  <span class="custom-checkbox"></span>
+  Shutdown <span class="tag">disables other pranks</span>
+</label><br>
+
+<h3>Fuse delay</h3>
+<p>Seconds between plugging the device in and the pranks firing. Gives the target time to react.</p>
+<input type="number" id="delay" min="0" max="60" value="3"> seconds
+<br><br>
+
+<b>Config:</b> <i id="summary" class="summary"></i>
+<br><br>
+<button id="build">Download config .uf2</button>
+<br>
+<div id="error" class="hidden note"></div>
+
+<h4>How to use</h4>
+<ol>
+  <li>Flash the firmware once: hold <b>BOOTSEL</b> while plugging the Pico in, then drag
+      <code>picokiller-pico.uf2</code> (Pico 1 / RP2040) or <code>picokiller-pico2.uf2</code>
+      (Pico 2 / RP2350) from a release onto the drive.</li>
+  <li>Re-enter BOOTSEL mode, drag the <code>picokiller-config.uf2</code> you just downloaded
+      onto the drive.</li>
+  <li>Replug the Pico into the victim machine. The LED blinks for the fuse delay, then the
+      pranks fire.</li>
+</ol>
+<p class="note">Pranks only run on an unlocked desktop session on Windows/Linux/macOS, and the
+machine must be yours to prank. Nothing here damages hardware.</p>
+
+<footer>Using GitHub repo: <a href="https://github.com/nOS-Coding/PicoKiller" target="_blank">nOS-Coding/PicoKiller</a>
+&middot; Firmware: <a href="https://github.com/nOS-Coding/PicoKiller/releases/latest" target="_blank">releases</a></footer>
+
+<script src="app.js"></script>
+</body>
+</html>

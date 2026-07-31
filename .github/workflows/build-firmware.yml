@@ -1,0 +1,46 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/raspberrypi/pico-sdk:latest
+    env:
+      PICO_SDK_PATH: /pico-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (pico)
+        run: cmake -B build-pico -S firmware -DCMAKE_BUILD_TYPE=Release -DPICO_BOARD=pico
+
+      - name: Build (pico)
+        run: cmake --build build-pico --target picokiller -j$(nproc)
+
+      - name: Configure (pico2)
+        run: cmake -B build-pico2 -S firmware -DCMAKE_BUILD_TYPE=Release -DPICO_BOARD=pico2
+
+      - name: Build (pico2)
+        run: cmake --build build-pico2 --target picokiller -j$(nproc)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: picokiller-uf2
+          path: |
+            build-pico/picokiller.uf2
+            build-pico2/picokiller.uf2
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build-pico/picokiller.uf2
+            build-pico2/picokiller.uf2
+          generate_release_notes: true
