@@ -8,25 +8,38 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/raspberrypi/pico-sdk:latest
-    env:
-      PICO_SDK_PATH: /pico-sdk
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Arm toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
 
       - name: Configure (pico)
         run: cmake -B build-pico -S firmware -DCMAKE_BUILD_TYPE=Release -DPICO_BOARD=pico
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
 
       - name: Build (pico)
         run: cmake --build build-pico --target picokiller -j$(nproc)
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
 
       - name: Configure (pico2)
         run: cmake -B build-pico2 -S firmware -DCMAKE_BUILD_TYPE=Release -DPICO_BOARD=pico2
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
 
       - name: Build (pico2)
         run: cmake --build build-pico2 --target picokiller -j$(nproc)
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
