@@ -41,19 +41,24 @@ jobs:
         env:
           PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
 
+      - name: Rename artifacts
+        run: |
+          cp build-pico/picokiller.uf2 picokiller-pico.uf2
+          cp build-pico2/picokiller.uf2 picokiller-pico2.uf2
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: picokiller-uf2
           path: |
-            build-pico/picokiller.uf2
-            build-pico2/picokiller.uf2
+            picokiller-pico.uf2
+            picokiller-pico2.uf2
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build-pico/picokiller.uf2
-            build-pico2/picokiller.uf2
+            picokiller-pico.uf2
+            picokiller-pico2.uf2
           generate_release_notes: true
