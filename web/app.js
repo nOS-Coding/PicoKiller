@@ -103,13 +103,13 @@ function concatUf2(...uf2s) {
   return out;
 }
 
-async function fetchReleaseAsset(name) {
-  const res = await fetch("https://api.github.com/repos/nOS-Coding/PicoKiller/releases/latest");
-  const data = await res.json();
-  const asset = (data.assets || []).find((a) => a.name === name);
-  if (!asset) throw new Error("asset not found: " + name);
-  const blob = await (await fetch(asset.url, { headers: { Accept: "application/octet-stream" } })).arrayBuffer();
-  return new Uint8Array(blob);
+function embeddedFirmware(name) {
+  const b64 = (window.PICO_FIRMWARE || {})[name];
+  if (!b64) throw new Error("embedded firmware missing: " + name);
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
 }
 
 // ---- UI ----
@@ -206,20 +206,14 @@ async function build() {
   const delayMs = clampDelay() * 1000;
   const cfg = buildConfig(tFlags, pFlags, delayMs);
   const cfgUf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET);
-  const btn = el("build");
 
   error.classList.add("hidden");
-  btn.textContent = "Downloading firmware...";
-  btn.disabled = true;
   try {
-    const fw = await fetchReleaseAsset(fwAssetName());
+    const fw = embeddedFirmware(fwAssetName());
     download(concatUf2(fw, cfgUf2), kitName());
-  } catch {
-    error.textContent = "Could not fetch the firmware (check your connection). Nothing downloaded.";
+  } catch (e) {
+    error.textContent = "Could not read the embedded firmware: " + e.message;
     error.classList.remove("hidden");
-  } finally {
-    btn.textContent = "Download config .uf2";
-    btn.disabled = false;
   }
 }
 
