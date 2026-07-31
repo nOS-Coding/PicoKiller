@@ -79,7 +79,10 @@ function download(bytes, name) {
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -111,6 +114,33 @@ function refresh() {
   updateSummary();
 }
 
+function boardName() {
+  return el("b-pico2").checked ? "Pico 2 (RP2350)" : "Pico 1 (RP2040)";
+}
+
+async function updateFirmwareLink() {
+  const name = el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
+  el("firmware-name").textContent = name;
+  const link = el("firmware-link");
+  link.textContent = "Loading...";
+  link.href = "#";
+  try {
+    const res = await fetch("https://api.github.com/repos/nOS-Coding/PicoKiller/releases/latest");
+    const data = await res.json();
+    const asset = (data.assets || []).find((a) => a.name === name);
+    if (asset) {
+      link.href = asset.browser_download_url;
+      link.textContent = "Download";
+    } else {
+      link.textContent = "Release page";
+      link.href = "https://github.com/nOS-Coding/PicoKiller/releases/latest";
+    }
+  } catch {
+    link.href = "https://github.com/nOS-Coding/PicoKiller/releases/latest";
+    link.textContent = "Release page";
+  }
+}
+
 function updateSummary() {
   const tFlags = selected(OS, 't');
   const pFlags = selected(PRANK, 'p');
@@ -123,7 +153,7 @@ function updateSummary() {
   const pNames = Object.keys(PRANK).filter((k) => pFlags & PRANK[k]).map((k) => names[k]);
   const fuse = delayS ? `${delayS}s` : "off";
   el("summary").textContent =
-    `Targets : ${tNames.join(", ") || "none"}\nPranks  : ${pNames.join(", ") || "none"}\nFuse    : ${fuse}`;
+    `Board   : ${boardName()}\nTargets : ${tNames.join(", ") || "none"}\nPranks  : ${pNames.join(", ") || "none"}\nFuse    : ${fuse}`;
 }
 
 function clampDelay() {
@@ -152,7 +182,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     "p-bsod", "p-update", "p-network", "p-shutdown"]) {
     el(id).addEventListener("change", refresh);
   }
+  for (const id of ["b-pico", "b-pico2"]) {
+    el(id).addEventListener("change", () => { refresh(); updateFirmwareLink(); });
+  }
   el("delay").addEventListener("input", updateSummary);
   el("build").addEventListener("click", build);
   refresh();
+  updateFirmwareLink();
 });

@@ -11,6 +11,18 @@
 <h2>PicoKiller configurator</h2>
 <p>Choose the target systems and pranks, then download a config .uf2.</p>
 
+<h3>Select Pico version</h3>
+<label>
+  <input type="radio" class="styled" name="board" id="b-pico2" checked>
+  <span class="custom-radio"></span>
+  Pico 2 (RP2350)
+</label><br>
+<label>
+  <input type="radio" class="styled" name="board" id="b-pico">
+  <span class="custom-radio"></span>
+  Pico 1 (RP2040)
+</label><br>
+
 <h3>Select target systems</h3>
 <label>
   <input type="checkbox" class="styled" id="t-windows" checked>
@@ -57,15 +69,15 @@
 
 <b>Config:</b> <i id="summary" class="summary"></i>
 <br><br>
-<button id="build">Download config .uf2</button>
+    <button id="build">Download config .uf2</button>
+    <p class="note">Firmware: <a id="firmware-link" href="#" target="_blank">picokiller-pico2.uf2</a></p>
 <br>
 <div id="error" class="hidden note"></div>
 
 <h4>How to use</h4>
 <ol>
   <li>Flash the firmware once: hold <b>BOOTSEL</b> while plugging the Pico in, then drag
-      <code>picokiller-pico.uf2</code> (Pico 1 / RP2040) or <code>picokiller-pico2.uf2</code>
-      (Pico 2 / RP2350) from a release onto the drive.</li>
+      <code id="firmware-name">picokiller-pico2.uf2</code> from a release onto the drive.</li>
   <li>Re-enter BOOTSEL mode, drag the <code>picokiller-config.uf2</code> you just downloaded
       onto the drive.</li>
   <li>Replug the Pico into the victim machine. The LED blinks for the fuse delay, then the
