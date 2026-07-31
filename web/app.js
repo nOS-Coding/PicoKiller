@@ -86,6 +86,32 @@ function download(bytes, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ---- Combined firmware + config .uf2 ----
+function concatUf2(...uf2s) {
+  let total = 0;
+  for (const u of uf2s) total += u.length / 512;
+  const out = new Uint8Array(total * 512);
+  const dv = new DataView(out.buffer);
+  let i = 0;
+  for (const u of uf2s) {
+    for (let off = 0; off < u.length; off += 512, i++) {
+      out.set(u.subarray(off, off + 512), i * 512);
+      dv.setUint32(i * 512 + 20, i, true);  // blockNo
+      dv.setUint32(i * 512 + 24, total, true); // numBlocks
+    }
+  }
+  return out;
+}
+
+async function fetchReleaseAsset(name) {
+  const res = await fetch("https://api.github.com/repos/nOS-Coding/PicoKiller/releases/latest");
+  const data = await res.json();
+  const asset = (data.assets || []).find((a) => a.name === name);
+  if (!asset) throw new Error("asset not found: " + name);
+  const blob = await (await fetch(asset.url, { headers: { Accept: "application/octet-stream" } })).arrayBuffer();
+  return new Uint8Array(blob);
+}
+
 // ---- UI ----
 const el = (id) => document.getElementById(id);
 
@@ -119,8 +145,7 @@ function boardName() {
 }
 
 async function updateFirmwareLink() {
-  const name = el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
-  el("firmware-name").textContent = name;
+  el("firmware-name").textContent = "picokiller-kit.uf2";
   const link = el("firmware-link");
   link.textContent = "Loading...";
   link.href = "#";
@@ -161,7 +186,7 @@ function clampDelay() {
   return Math.max(0, Math.min(60, isNaN(v) ? 0 : v));
 }
 
-function build() {
+async function build() {
   const tFlags = selected(OS, 't');
   const pFlags = selected(PRANK, 'p');
   const error = el("error");
@@ -171,10 +196,24 @@ function build() {
 
   const delayMs = clampDelay() * 1000;
   const cfg = buildConfig(tFlags, pFlags, delayMs);
-  const uf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET);
-  download(uf2, "picokiller-config.uf2");
+  const cfgUf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET);
+  const fwName = el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
+  const btn = el("build");
 
   error.classList.add("hidden");
+  btn.textContent = "Downloading firmware...";
+  btn.disabled = true;
+  try {
+    const fw = await fetchReleaseAsset(fwName);
+    download(concatUf2(fw, cfgUf2), "picokiller-kit.uf2");
+  } catch {
+    download(cfgUf2, "picokiller-config.uf2");
+    error.textContent = "Firmware download failed — config-only file saved. Flash the firmware separately.";
+    error.classList.remove("hidden");
+  } finally {
+    btn.textContent = "Download config .uf2";
+    btn.disabled = false;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
