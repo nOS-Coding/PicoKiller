@@ -24,6 +24,11 @@ const CONFIG_VERSION = 1;
 const CONFIG_FLASH_OFFSET = 0x1F0000;     // must match firmware/config.c
 const UF2_FLASH_BASE = 0x10000000;
 
+// UF2 family IDs the bootrom requires on every block (see boot/uf2.h).
+const UF2_FLAG_FAMILY_ID_PRESENT = 0x00002000;
+const RP2040_FAMILY_ID = 0xE48BFF56;
+const RP2350_ARM_S_FAMILY_ID = 0xE48BFF59;
+
 // ---- CRC-32 (bitwise, identical to firmware/config.c) ----
 function crc32(data) {
   let crc = 0xFFFFFFFF;
@@ -51,22 +56,35 @@ function buildConfig(targetFlags, prankFlags, delayMs) {
 }
 
 // ---- UF2 wrapping ----
-function toUf2(data, addr) {
-  const n = Math.ceil(data.length / 476);
+// Blocks carry a full 256-byte payload page (zero-padded), flagged with the
+// family ID in field 7 (file_size, offset 28) when one is given — exactly
+// like pico-sdk's elf2uf2 output. The RP2xxx bootrom drops any block whose
+// payload is not a full page or that lacks the FAMILY_ID_PRESENT flag.
+function toUf2(data, addr, family) {
+  const PAGE = 256;
+  const n = Math.max(1, Math.ceil(data.length / PAGE));
   const out = new Uint8Array(n * 512);
+  const flags = family ? UF2_FLAG_FAMILY_ID_PRESENT : 0;
   for (let i = 0; i < n; i++) {
     const off = i * 512;
-    // magic "UF2\n", magic2, flags=0 (no family ID -> works on RP2040 & RP2350)
-    out.set([0x55, 0x46, 0x32, 0x0A], off);
-    out.set([0x57, 0x51, 0x5D, 0x9E], off + 4);
-    const a = addr + i * 476;
+    out.set([0x55, 0x46, 0x32, 0x0A], off);       // magic "UF2\n"
+    out.set([0x57, 0x51, 0x5D, 0x9E], off + 4);   // magic2
+    out[off + 8] = flags & 0xFF;
+    out[off + 9] = (flags >> 8) & 0xFF;
+    out[off + 10] = (flags >> 16) & 0xFF;
+    out[off + 11] = (flags >>> 24) & 0xFF;
+    const a = addr + i * PAGE;
     out[off + 12] = a & 0xFF;        out[off + 13] = (a >> 8) & 0xFF;
     out[off + 14] = (a >> 16) & 0xFF; out[off + 15] = (a >>> 24) & 0xFF;
-    const sz = Math.min(476, data.length - i * 476);
-    out[off + 16] = sz & 0xFF;       out[off + 17] = (sz >> 8) & 0xFF;
+    out[off + 16] = PAGE & 0xFF;     out[off + 17] = (PAGE >> 8) & 0xFF;
     out[off + 20] = i & 0xFF;        out[off + 21] = (i >> 8) & 0xFF;
-    out[off + 24] = n & 0xFF;        out[off + 25] = (n >> 8) & 0xFF;
-    out.set(data.subarray(i * 476, i * 476 + sz), off + 32);
+    out[off + 24] = n & 0xFF;        out[off + 25] = (n >> 8) & 0xFF;   // num_blocks
+    // field 7 (offset 28): family ID when FAMILY_ID_PRESENT
+    if (family) {
+      out[off + 28] = family & 0xFF;        out[off + 29] = (family >> 8) & 0xFF;
+      out[off + 30] = (family >> 16) & 0xFF; out[off + 31] = (family >>> 24) & 0xFF;
+    }
+    out.set(data.subarray(i * PAGE, i * PAGE + PAGE), off + 32); // zero-padded
     out.set([0x30, 0x6F, 0xB1, 0x0A], off + 508); // end magic
   }
   return out;
@@ -96,8 +114,11 @@ function concatUf2(...uf2s) {
   for (const u of uf2s) {
     for (let off = 0; off < u.length; off += 512, i++) {
       out.set(u.subarray(off, off + 512), i * 512);
-      dv.setUint32(i * 512 + 20, i, true);  // blockNo
-      dv.setUint32(i * 512 + 24, total, true); // numBlocks
+      dv.setUint32(i * 512 + 20, i, true);       // blockNo
+      // Renumber num_blocks except on the SDK's boot-header block, whose
+      // field 6 carries extension data. Never touch field 7 (family ID).
+      const flags = dv.getUint32(i * 512 + 8, true);
+      if (!(flags & 0x8000)) dv.setUint32(i * 512 + 24, total, true);
     }
   }
   return out;
@@ -150,6 +171,10 @@ function kitName() {
 
 function fwAssetName() {
   return el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
+}
+
+function familyId() {
+  return el("b-pico2").checked ? RP2350_ARM_S_FAMILY_ID : RP2040_FAMILY_ID;
 }
 
 async function updateFirmwareLink() {
@@ -205,7 +230,7 @@ async function build() {
 
   const delayMs = clampDelay() * 1000;
   const cfg = buildConfig(tFlags, pFlags, delayMs);
-  const cfgUf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET);
+  const cfgUf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET, familyId());
 
   error.classList.add("hidden");
   try {
