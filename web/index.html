@@ -9,8 +9,7 @@
 <body>
 
 <h2>PicoKiller configurator</h2>
-<p>Choose the target systems and pranks you want the device to fire, then download a config .uf2.</p>
-<p>The config only writes the last 4 KB of flash — your firmware is never touched.</p>
+<p>Choose the target systems and pranks, then download a config .uf2.</p>
 
 <h3>Select target systems</h3>
 <label>
@@ -52,8 +51,8 @@
 </label><br>
 
 <h3>Fuse delay</h3>
-<p>Seconds between plugging the device in and the pranks firing. Gives the target time to react.</p>
-<input type="number" id="delay" min="0" max="60" value="3"> seconds
+<p>Seconds before pranks fire after plugging in. 0 = disabled.</p>
+<input type="number" id="delay" min="0" max="60" value="0"> seconds
 <br><br>
 
 <b>Config:</b> <i id="summary" class="summary"></i>
@@ -72,8 +71,7 @@
   <li>Replug the Pico into the victim machine. The LED blinks for the fuse delay, then the
       pranks fire.</li>
 </ol>
-<p class="note">Pranks only run on an unlocked desktop session on Windows/Linux/macOS, and the
-machine must be yours to prank. Nothing here damages hardware.</p>
+<p class="note">Machine must be yours to prank. Nothing damages hardware.</p>
 
 <footer>Using GitHub repo: <a href="https://github.com/nOS-Coding/PicoKiller" target="_blank">nOS-Coding/PicoKiller</a>
 &middot; Firmware: <a href="https://github.com/nOS-Coding/PicoKiller/releases/latest" target="_blank">releases</a></footer>

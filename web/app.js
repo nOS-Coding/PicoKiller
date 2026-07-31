@@ -121,13 +121,14 @@ function updateSummary() {
   };
   const tNames = Object.keys(OS).filter((k) => tFlags & OS[k]).map((k) => names[k]);
   const pNames = Object.keys(PRANK).filter((k) => pFlags & PRANK[k]).map((k) => names[k]);
+  const fuse = delayS ? `${delayS}s` : "off";
   el("summary").textContent =
-    `Targets : ${tNames.join(", ") || "none"}\nPranks  : ${pNames.join(", ") || "none"}\nFuse    : ${delayS}s`;
+    `Targets : ${tNames.join(", ") || "none"}\nPranks  : ${pNames.join(", ") || "none"}\nFuse    : ${fuse}`;
 }
 
 function clampDelay() {
   const v = parseInt(el("delay").value, 10);
-  return Math.max(0, Math.min(60, isNaN(v) ? 3 : v));
+  return Math.max(0, Math.min(60, isNaN(v) ? 0 : v));
 }
 
 function build() {
