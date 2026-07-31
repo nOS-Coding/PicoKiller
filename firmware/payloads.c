@@ -62,11 +62,14 @@ static const script_evt_t seq_win_network[] = {
     ENDEV
 };
 
+/* Shut down via the keyboard: Win+X opens the power user menu, U opens
+ * "Shut down or sign out", U again picks "Shut down". No shell, no dialogs. */
 static const script_evt_t seq_win_shutdown[] = {
-    KEY(KEY_GUI, KEY_R),
-    DLY(700),
-    STR("shutdown /s /t 0"),
-    KEY(0, KEY_ENTER),
+    KEY(KEY_GUI, KEY_X),
+    DLY(800),
+    KEY(0, KEY_U),
+    DLY(500),
+    KEY(0, KEY_U),
     ENDEV
 };
 
@@ -90,10 +93,10 @@ static const script_evt_t seq_linux_network[] = {
     ENDEV
 };
 
+/* Shut down via Ctrl+Alt+Del (power dialog) then Enter to confirm. */
 static const script_evt_t seq_linux_shutdown[] = {
-    KEY(KEY_CTRL | KEY_ALT, KEY_T),
-    DLY(1500),
-    STR("poweroff"),
+    KEY(KEY_CTRL | KEY_ALT, KEY_DELETE),
+    DLY(1200),
     KEY(0, KEY_ENTER),
     ENDEV
 };
@@ -121,12 +124,11 @@ static const script_evt_t seq_macos_network[] = {
     ENDEV
 };
 
-/* Display sleep: looks like the machine died, but is 100% harmless. */
+/* Immediate shutdown via the power-key shortcut Ctrl+Option+Cmd+Power.
+ * No terminal, no shell, no permissions — it's the same as holding the
+ * power button's shortcut on a Mac keyboard. */
 static const script_evt_t seq_macos_shutdown[] = {
-    KEY(KEY_GUI, KEY_SPACE),
-    DLY(900),
-    STR("pmset displaysleepnow"),
-    KEY(0, KEY_ENTER),
+    KEY(KEY_CTRL | KEY_ALT | KEY_GUI, KEY_POWER),
     ENDEV
 };
 

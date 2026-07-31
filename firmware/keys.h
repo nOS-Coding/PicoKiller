@@ -20,6 +20,8 @@
 #define KEY_UP         0x52
 #define KEY_DOWN       0x51
 #define KEY_RIGHT      0x4F
+#define KEY_DELETE     0x4C
+#define KEY_POWER      0x66
 
 #define KEY_A 0x04
 #define KEY_B 0x05
