@@ -144,15 +144,24 @@ function boardName() {
   return el("b-pico2").checked ? "Pico 2 (RP2350)" : "Pico 1 (RP2040)";
 }
 
+function kitName() {
+  return el("b-pico2").checked ? "picokiller-pico2-kit.uf2" : "picokiller-pico-kit.uf2";
+}
+
+function fwAssetName() {
+  return el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
+}
+
 async function updateFirmwareLink() {
-  el("firmware-name").textContent = "picokiller-kit.uf2";
+  const name = kitName();
+  el("firmware-name").textContent = name;
   const link = el("firmware-link");
   link.textContent = "Loading...";
   link.href = "#";
   try {
     const res = await fetch("https://api.github.com/repos/nOS-Coding/PicoKiller/releases/latest");
     const data = await res.json();
-    const asset = (data.assets || []).find((a) => a.name === name);
+    const asset = (data.assets || []).find((a) => a.name === fwAssetName());
     if (asset) {
       link.href = asset.browser_download_url;
       link.textContent = "Download";
@@ -197,18 +206,16 @@ async function build() {
   const delayMs = clampDelay() * 1000;
   const cfg = buildConfig(tFlags, pFlags, delayMs);
   const cfgUf2 = toUf2(cfg, UF2_FLASH_BASE + CONFIG_FLASH_OFFSET);
-  const fwName = el("b-pico2").checked ? "picokiller-pico2.uf2" : "picokiller-pico.uf2";
   const btn = el("build");
 
   error.classList.add("hidden");
   btn.textContent = "Downloading firmware...";
   btn.disabled = true;
   try {
-    const fw = await fetchReleaseAsset(fwName);
-    download(concatUf2(fw, cfgUf2), "picokiller-kit.uf2");
+    const fw = await fetchReleaseAsset(fwAssetName());
+    download(concatUf2(fw, cfgUf2), kitName());
   } catch {
-    download(cfgUf2, "picokiller-config.uf2");
-    error.textContent = "Firmware download failed — config-only file saved. Flash the firmware separately.";
+    error.textContent = "Could not fetch the firmware (check your connection). Nothing downloaded.";
     error.classList.remove("hidden");
   } finally {
     btn.textContent = "Download config .uf2";
